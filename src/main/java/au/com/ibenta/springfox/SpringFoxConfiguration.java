@@ -84,8 +84,4 @@ public class SpringFoxConfiguration {
                 Collections.emptyList());
     }
 
-    @Bean
-    public ModelMapper modelMapper() {
-        return new ModelMapper();
-    }
 }
