@@ -16,6 +16,7 @@ import springfox.documentation.schema.WildcardType;
 import springfox.documentation.service.ApiInfo;
 import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
+import springfox.documentation.swagger2.mappers.ModelMapper;
 
 import java.util.Collections;
 import java.util.List;
@@ -41,12 +42,13 @@ public class SpringFoxConfiguration {
     Docket api() {
         return new Docket(DocumentationType.SWAGGER_2)
                 .select()
-                .apis(RequestHandlerSelectors.withClassAnnotation(Api.class))
+                .apis(RequestHandlerSelectors.basePackage("au.com.ibenta"))
                 .paths(PathSelectors.any())
                 .build()
                 .apiInfo(apiInfo())
                 .alternateTypeRules(monoTypeRule())
                 .alternateTypeRules(fluxTypeRule());
+
     }
 
     private RecursiveAlternateTypeRule monoTypeRule() {
@@ -80,5 +82,10 @@ public class SpringFoxConfiguration {
                 null,
                 null,
                 Collections.emptyList());
+    }
+
+    @Bean
+    public ModelMapper modelMapper() {
+        return new ModelMapper();
     }
 }
