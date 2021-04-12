@@ -1,55 +1,49 @@
 package au.com.ibenta.test.service;
 
-import au.com.ibenta.test.params.UserParams;
+import au.com.ibenta.test.model.UserParams;
 import au.com.ibenta.test.response.ResponseBase;
+import io.swagger.annotations.Api;
 import org.json.JSONObject;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
-import springfox.documentation.spring.web.json.Json;
-
 import javax.annotation.Resource;
-import java.util.Collections;
 import java.util.HashMap;
 
+@Api(tags = "users")
 @RestController
-@RequestMapping(path="/users") // This means URL's start with /userAPI (after Application path)
+@RequestMapping(path="/users")
 public class UserController {
 
     @Resource
     UserService userService;
 
-
-    @ResponseStatus(HttpStatus.CREATED)
-    @PostMapping(path="/create") // Map ONLY POST Requests
+    @PostMapping(path="/create")
     public @ResponseBody
-    ResponseBase create (@RequestBody UserParams user) {
-        // @ResponseBody means the returned String is the response, not a view name
-        // @RequestBody means it is a JSON parameter from the POST, PUT, PATCH request
-        return userService.create(user);
+    ResponseEntity<String> create (@RequestBody UserParams user) {
+       return userService.create(user);
     }
 
     @GetMapping(path="/get/{userId}")
     public @ResponseBody
-    ResponseBase get(@PathVariable Long userId) { return userService.get(userId); }
+    ResponseEntity<String> get(@PathVariable Long userId) { return userService.get(userId); }
 
     @PutMapping(path="/update/{userId}")
     public @ResponseBody
-    ResponseBase update (@RequestBody UserParams userParams,
-                                      @PathVariable Long userId) {
+    ResponseEntity<String> update (@RequestBody UserParams userParams,
+                                   @PathVariable Long userId) {
         return userService.update(userParams, userId);
     }
 
-    @ResponseStatus(HttpStatus.CREATED)
     @DeleteMapping(path="/delete/{userId}")
     public @ResponseBody
-    ResponseBase delete (@PathVariable Long userId) {
+    ResponseEntity<String> delete (@PathVariable Long userId) {
         return userService.delete(userId);
     }
 
     @GetMapping(path="/list")
     public @ResponseBody
-    ResponseBase list() {  return userService.list(); }
+    ResponseEntity<String> list() {  return userService.list(); }
 
     @GetMapping(path = "/checkHealth")
     public @ResponseBody

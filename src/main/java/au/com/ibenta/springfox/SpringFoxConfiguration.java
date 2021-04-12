@@ -42,7 +42,7 @@ public class SpringFoxConfiguration {
     Docket api() {
         return new Docket(DocumentationType.SWAGGER_2)
                 .select()
-                .apis(RequestHandlerSelectors.basePackage("au.com.ibenta"))
+                .apis(RequestHandlerSelectors.withClassAnnotation(Api.class))
                 .paths(PathSelectors.any())
                 .build()
                 .apiInfo(apiInfo())

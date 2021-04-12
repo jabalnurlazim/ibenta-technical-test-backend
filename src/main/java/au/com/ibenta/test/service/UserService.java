@@ -2,13 +2,15 @@ package au.com.ibenta.test.service;
 
 import au.com.ibenta.test.model.User;
 import au.com.ibenta.test.persistence.UserEntity;
-import au.com.ibenta.test.params.UserParams;
+import au.com.ibenta.test.model.UserParams;
 import au.com.ibenta.test.persistence.UserRepository;
-import au.com.ibenta.test.response.ResponseBase;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -16,68 +18,71 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
-    public static final Logger logger = LoggerFactory.getLogger(UserService.class);
+    private ModelMapper modelMapper = new ModelMapper();
 
-    public ResponseBase create (UserParams userParams) {
+    public ResponseEntity<String> create(UserParams userParams) {
+
+        String response = dataValidation(userParams);
+        if(!response.equals("success")) return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+
+        UserEntity userEntity = userRepository.save(modelMapper.map(userParams, UserEntity.class));
+
+        User user = modelMapper.map(userEntity, User.class);
+
+        return new ResponseEntity<>(user.toString(), HttpStatus.CREATED);
+
+    }
+
+    public ResponseEntity<String> get (Long userId) {
+
+        if(!userRepository.existsById(userId))
+            return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
+
+        UserEntity userEntity = userRepository.findById(userId).get();
+        User user = modelMapper.map(userEntity, User.class);
+
+        return new ResponseEntity<>(user.toString(), HttpStatus.OK);
+    }
+
+    public ResponseEntity<String> update (UserParams userParams, Long userId) {
+
+        if(!userRepository.existsById(userId))
+            return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
 
         // check if parameters are complete
-        ResponseBase response = dataValidation(userParams);
-        if(response.getCode() != ResponseBase.OK.getCode()) return response;
+        String response = dataValidation(userParams);
+        if(!response.equals("success"))
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
 
-        return ResponseBase.newSuccessResponse(convertEntityToDTO(userRepository.save(convertParamsToEntity(userParams, null))));
+        UserEntity userEntity = userRepository.save(mapParamsToEntity(userParams, userId));
 
-    }
+        User user = modelMapper.map(userEntity, User.class);
 
-    public ResponseBase get (Long userId) {
-        // check user if exist
-        if(!userRepository.existsById(userId)) return ResponseBase.INVALID_USER;
-
-        return ResponseBase.newSuccessResponse(ResponseBase.OK, convertEntityToDTO(userRepository.findById(userId).get()));
-    }
-
-    public ResponseBase update (UserParams userParams, Long userId) {
-
-        // check user if exist
-        if(!userRepository.existsById(userId)) return ResponseBase.INVALID_USER;
-
-        // check if parameters are complete
-        ResponseBase response = dataValidation(userParams);
-        if(response.getCode() != ResponseBase.OK.getCode()) return response;
-
-        logger.info("User has been updated");
-        return ResponseBase.newSuccessResponse(ResponseBase.OK, convertEntityToDTO(userRepository.save(convertParamsToEntity(userParams, userId))));
+        return new ResponseEntity<>(user.toString(), HttpStatus.OK);
 
     }
 
-    public ResponseBase delete (Long userId) {
-        // check user if exist
-        if(!userRepository.existsById(userId)) return ResponseBase.INVALID_USER;
+    public ResponseEntity<String> delete (Long userId) {
+
+        if(!userRepository.existsById(userId)) return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
 
         userRepository.deleteById(userId);
-        logger.info("User has been deleted");
-        return ResponseBase.SUCCESS;
+
+        return new ResponseEntity<>(null, HttpStatus.CREATED);
     }
 
-    public ResponseBase list() {
-        return ResponseBase.newSuccessResponse(ResponseBase.OK, userRepository.findAll().stream()
-                .map(this::convertEntityToDTO)
-                .collect(Collectors.toList()));
+    public ResponseEntity<String> list() {
+
+        List<User> userList = userRepository.findAll().stream()
+                .map(user -> modelMapper.map(user, User.class))
+                .collect(Collectors.toList());
+
+        return new ResponseEntity<>(userList.toString(), HttpStatus.OK);
     }
 
-    public User convertEntityToDTO(UserEntity userEntity) {
-        User user = new User();
-        user.setId(userEntity.getId());
-        user.setFirstName(userEntity.getFirstName());
-        user.setLastName(userEntity.getLastName());
-        user.setEmail(userEntity.getEmail());
-        return user;
-    }
+    private UserEntity mapParamsToEntity(UserParams userParams, Long id) {
 
-    private UserEntity convertParamsToEntity(UserParams userParams, Long id) {
-        UserEntity user = null;
-
-        if(id == null) user = new UserEntity();
-        else user = userRepository.findById(id).get();
+        UserEntity user = userRepository.findById(id).get();
 
         user.setFirstName(userParams.getFirstName());
         user.setLastName(userParams.getLastName());
@@ -87,16 +92,16 @@ public class UserService {
         return user;
     }
 
-    private ResponseBase dataValidation(UserParams userParams) {
+    private String dataValidation(UserParams userParams) {
         if(userParams.getFirstName() == null || userParams.getFirstName().isEmpty())
-            return ResponseBase.INVALID_FIRST_NAME;
+            return "firstName is required";
         if(userParams.getLastName() == null || userParams.getLastName().isEmpty())
-            return ResponseBase.INVALID_LAST_NAME;
+            return "lastname is required";
         if(userParams.getEmail() == null || userParams.getEmail().isEmpty() || !User.isValidEmail(userParams.getEmail()))
-            return ResponseBase.INVALID_EMAIL;
+            return "email is required and should be a proper email format";
         if(userParams.getPassword() == null || userParams.getPassword().isEmpty())
-            return ResponseBase.INVALID_PASSWORD;
+            return "password is required";
 
-        return ResponseBase.OK;
+        return "success";
     }
 }

@@ -1,4 +1,4 @@
-package au.com.ibenta.test.params;
+package au.com.ibenta.test.model;
 
 public class UserParams {
 
@@ -9,6 +9,13 @@ public class UserParams {
     private String email;
 
     private String password;
+
+    public UserParams(String firstName, String lastName, String email, String password) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.password = password;
+    }
 
     public String getFirstName() {
         return firstName;
@@ -46,5 +53,4 @@ public class UserParams {
                 ", email='" + email + '\'' +
                 '}';
     }
-
 }
